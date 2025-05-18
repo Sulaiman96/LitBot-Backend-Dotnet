@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\LitBot.API\LitBot.API.csproj" />
+      <ProjectReference Include="..\LitBot.Core\LitBot.Core.csproj" />
+      <ProjectReference Include="..\LitBot.Infrastructure\LitBot.Infrastructure.csproj" />
+    </ItemGroup>
+
+</Project>

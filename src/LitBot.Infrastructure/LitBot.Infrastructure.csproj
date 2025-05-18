@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Nullable>enable</Nullable>
+        <UserSecretsId>3b77da1b-e7b2-4513-8b38-a825b88265f8</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,6 +15,10 @@
     <ItemGroup>
       <Folder Include="Data\" />
       <Folder Include="Services\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Supabase" Version="1.1.1" />
     </ItemGroup>
 
 </Project>
