@@ -2,9 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LitBot.API", "src\LitBot.API\LitBot.API.csproj", "{65EC8195-0EF1-40AB-8A8A-3C1BC4F73722}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LitBot.Core", "LitBot.Core\LitBot.Core.csproj", "{D0C341FF-2CF4-4D1C-A089-F950DC580FE4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LitBot.Core", "src\LitBot.Core\LitBot.Core.csproj", "{D0C341FF-2CF4-4D1C-A089-F950DC580FE4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LitBot.Infrastructure", "LitBot.Infrastructure\LitBot.Infrastructure.csproj", "{22BB8C62-5690-44FD-B294-A80FF88076DC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LitBot.Infrastructure", "src\LitBot.Infrastructure\LitBot.Infrastructure.csproj", "{22BB8C62-5690-44FD-B294-A80FF88076DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
