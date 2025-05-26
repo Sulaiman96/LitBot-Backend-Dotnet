@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\LitBot.Core\LitBot.Core.csproj" />
+      <ProjectReference Include="..\LitBot.Core\LitBot.Core.csproj" />
     </ItemGroup>
 
 </Project>
