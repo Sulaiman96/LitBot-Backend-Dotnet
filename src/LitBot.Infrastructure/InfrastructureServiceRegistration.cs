@@ -12,22 +12,18 @@ public static class InfrastructureServiceRegistration
         this IServiceCollection services, 
         IConfiguration configuration)
     {
-        services.Configure<SupabaseOptions>(
-            configuration.GetSection("Supabase"));
-
         // Register Supabase Client
-        services.AddScoped<Client>(provider =>
+        services.AddScoped<Client>(_ =>
         {
-            var supabaseSection = configuration.GetSection("Supabase");
-            var url = supabaseSection["Url"] ?? throw new InvalidOperationException("Supabase URL not configured");
-            var key = supabaseSection["Key"] ?? throw new InvalidOperationException("Supabase Key not configured");
-            
+            var url = configuration["SupabaseUrl"] ?? throw new InvalidOperationException("Supabase URL not configured");
+            var key = configuration["SupabaseKey"] ?? throw new InvalidOperationException("Supabase Key not configured");
+
             var options = new SupabaseOptions
             {
                 AutoRefreshToken = true,
                 AutoConnectRealtime = true
             };
-            
+
             return new Client(url, key, options);
         });
 
