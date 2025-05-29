@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace LitBot.Bootstrap;
 
 using LitBot.API;
@@ -9,6 +11,9 @@ internal class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Host.UseSerilog((context, configuration) =>
+            configuration.WriteTo.Console());
+        
         // Add services from API layer
         builder.Services.AddApiServices();
 
