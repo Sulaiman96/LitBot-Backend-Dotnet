@@ -130,7 +130,186 @@ public class AuthController(
         }
     }
     
+    /// <summary>
+    /// Refresh the authentication token
+    /// </summary>
+    /// <returns>Success message if refresh successful</returns>
+    [HttpPost("refresh")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RefreshToken()
+    {
+        try
+        {
+            logger.LogInformation("Token refresh attempt");
+            
+            await authService.RefreshTokenAsync();
+            
+            logger.LogInformation("Token refreshed successfully");
+            
+            return Ok(new { message = "Token refreshed successfully" });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogWarning("Token refresh failed: {Message}", ex.Message);
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "Token Refresh Failed",
+                Detail = ex.Message,
+                Status = StatusCodes.Status401Unauthorized,
+                Instance = HttpContext.Request.Path
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogError("Token refresh failed - HttpContext not available: {Message}", ex.Message);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Title = "Internal Server Error",
+                Detail = "Unable to process request. Please try again later.",
+                Status = StatusCodes.Status500InternalServerError,
+                Instance = HttpContext.Request.Path
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error during token refresh");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred. Please try again later.",
+                Status = StatusCodes.Status500InternalServerError,
+                Instance = HttpContext.Request.Path
+            });
+        }
+    }
     
+    /// <summary>
+    /// Request a password reset email
+    /// </summary>
+    /// <param name="forgotPasswordDto">Email address for password reset</param>
+    /// <returns>Success message</returns>
+    [HttpPost("forgot-password")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDto forgotPasswordDto)
+    {
+        try
+        {
+            logger.LogInformation("Password reset requested for email: {Email}", forgotPasswordDto.Email);
+            
+            var message = await authService.ForgotPasswordAsync(forgotPasswordDto);
+            
+            logger.LogInformation("Password reset email sent to: {Email}", forgotPasswordDto.Email);
+            
+            // Always return success to prevent email enumeration attacks
+            return Ok(new { message = message });
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogWarning("Forgot password failed - invalid input: {Message}", ex.Message);
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = ex.Message,
+                Status = StatusCodes.Status400BadRequest,
+                Instance = HttpContext.Request.Path
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error during password reset request");
+            // Still return OK to prevent email enumeration
+            return Ok(new { message = "If the email exists, a password reset link has been sent." });
+        }
+    }
+    
+    /// <summary>
+    /// Reset password using token from email
+    /// </summary>
+    /// <param name="resetPasswordDto">Token and new password</param>
+    /// <returns>Success message</returns>
+    [HttpPost("reset-password")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordDto)
+    {
+        try
+        {
+            logger.LogInformation("Password reset attempt with token");
+            
+            var message = await authService.ResetPasswordAsync(resetPasswordDto);
+            
+            logger.LogInformation("Password reset successful");
+            
+            return Ok(new { message = message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogWarning("Password reset failed - invalid token: {Message}", ex.Message);
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "Password Reset Failed",
+                Detail = ex.Message,
+                Status = StatusCodes.Status401Unauthorized,
+                Instance = HttpContext.Request.Path
+            });
+        }
+        catch (ArgumentException ex)
+        {
+            logger.LogWarning("Password reset failed - invalid input: {Message}", ex.Message);
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = ex.Message,
+                Status = StatusCodes.Status400BadRequest,
+                Instance = HttpContext.Request.Path
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error during password reset");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
+            {
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred. Please try again later.",
+                Status = StatusCodes.Status500InternalServerError,
+                Instance = HttpContext.Request.Path
+            });
+        }
+    }
+    
+    /// <summary>
+    /// Logout the current user
+    /// </summary>
+    /// <returns>Success message</returns>
+    [HttpPost("logout")]
+    [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public IActionResult Logout()
+    {
+        try
+        {
+            logger.LogInformation("User logout");
+            
+            // Clear the authentication cookies
+            Response.Cookies.Delete("sb-access-token");
+            Response.Cookies.Delete("sb-refresh-token");
+            
+            logger.LogInformation("User logged out successfully");
+            
+            return Ok(new { message = "Logout successful" });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during logout");
+            return Ok(new { message = "Logout completed" });
+        }
+    }
 
     /// <summary>
     /// Get current authenticated user details
