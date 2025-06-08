@@ -204,7 +204,6 @@ public class AuthController(
             
             logger.LogInformation("Password reset email sent to: {Email}", forgotPasswordDto.Email);
             
-            // Always return success to prevent email enumeration attacks
             return Ok(new { message = message });
         }
         catch (ArgumentException ex)
@@ -221,7 +220,6 @@ public class AuthController(
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error during password reset request");
-            // Still return OK to prevent email enumeration
             return Ok(new { message = "If the email exists, a password reset link has been sent." });
         }
     }
@@ -233,7 +231,6 @@ public class AuthController(
     /// <returns>Success message</returns>
     [HttpPost("reset-password")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequestDto resetPasswordDto)
@@ -259,20 +256,55 @@ public class AuthController(
                 Instance = HttpContext.Request.Path
             });
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
-            logger.LogWarning("Password reset failed - invalid input: {Message}", ex.Message);
-            return BadRequest(new ProblemDetails
+            logger.LogError(ex, "Unexpected error during password reset");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
             {
-                Title = "Invalid Request",
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred. Please try again later.",
+                Status = StatusCodes.Status500InternalServerError,
+                Instance = HttpContext.Request.Path
+            });
+        }
+    }
+    
+    /// <summary>
+    /// Change password using current password
+    /// </summary>
+    /// <param name="changePasswordDto">contains current and new password</param>
+    /// <returns>successfully changes password</returns>
+    [HttpPost("change-password")]
+    [Authorize] // User must be logged in
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequestDto changePasswordDto)
+    {
+        try
+        {
+            logger.LogInformation("Password change attempt for authenticated user");
+            
+            var message = await authService.ChangePasswordAsync(changePasswordDto);
+            
+            logger.LogInformation("Password changed successfully");
+            
+            return Ok(new { message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogWarning("Password change failed: {Message}", ex.Message);
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "Password Change Failed",
                 Detail = ex.Message,
-                Status = StatusCodes.Status400BadRequest,
+                Status = StatusCodes.Status401Unauthorized,
                 Instance = HttpContext.Request.Path
             });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Unexpected error during password reset");
+            logger.LogError(ex, "Unexpected error during password change");
             return StatusCode(StatusCodes.Status500InternalServerError, new ProblemDetails
             {
                 Title = "Internal Server Error",

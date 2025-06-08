@@ -15,8 +15,8 @@ public static class InfrastructureServiceRegistration
         // Register Supabase Client
         services.AddScoped<Client>(_ =>
         {
-            var url = configuration["SupabaseUrl"] ?? throw new InvalidOperationException("Supabase URL not configured");
-            var key = configuration["SupabaseKey"] ?? throw new InvalidOperationException("Supabase Key not configured");
+            var url = configuration["SUPABASE_URL"] ?? throw new InvalidOperationException("Supabase URL not configured");
+            var key = configuration["SUPABASE_KEY"] ?? throw new InvalidOperationException("Supabase Key not configured");
 
             var options = new SupabaseOptions
             {

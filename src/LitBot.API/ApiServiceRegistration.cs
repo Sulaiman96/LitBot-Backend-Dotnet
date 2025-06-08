@@ -95,7 +95,7 @@ public static class ApiServiceRegistration
             options.AddPolicy("LitBotCors", builder =>
             {
                 builder
-                    .WithOrigins("http://localhost:3000", "https://localhost:3000") // Addy => Update this with frontend URL
+                    .WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5079") // Addy => Update this with frontend URL
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials(); // Important for cookies

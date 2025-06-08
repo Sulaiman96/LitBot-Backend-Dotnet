@@ -67,22 +67,38 @@ public class SupabaseAuthService(
     public async Task RefreshTokenAsync()
     {
         logger.LogDebug("Attempting to refresh token");
-        
+    
         var context = httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext not available");
-        
+    
         var refreshToken = context.Request.Cookies[RefreshTokenCookie];
         if (string.IsNullOrEmpty(refreshToken))
             throw new UnauthorizedAccessException("No refresh token found.");
 
-        var refreshedSession =  await supabaseClient.Auth.RefreshSession();
-
-        if (refreshedSession?.User == null || refreshedSession.AccessToken == null)
+        var accessToken = context.Request.Cookies[AccessTokenCookie];
+    
+        try
         {
-            ClearAuthCookies();
-            throw new UnauthorizedAccessException("Invalid refresh token.");
-        }
+            if (!string.IsNullOrEmpty(accessToken))
+            {
+                await supabaseClient.Auth.SetSession(accessToken, refreshToken);
+            }
+            
+            var refreshedSession = await supabaseClient.Auth.RefreshSession();
+
+            if (refreshedSession?.User == null || refreshedSession.AccessToken == null)
+            {
+                ClearAuthCookies();
+                throw new UnauthorizedAccessException("Invalid refresh token.");
+            }
         
-        SetAuthCookies(refreshedSession.AccessToken, refreshedSession.RefreshToken!);
+            SetAuthCookies(refreshedSession.AccessToken, refreshedSession.RefreshToken!);
+        }
+        catch (Supabase.Gotrue.Exceptions.GotrueException ex)
+        {
+            logger.LogError(ex, "Failed to refresh token");
+            ClearAuthCookies();
+            throw new UnauthorizedAccessException("Invalid or expired refresh token.");
+        }
     }
 
     public async Task<string> ForgotPasswordAsync(ForgotPasswordRequestDto forgotRequest)
@@ -100,13 +116,9 @@ public class SupabaseAuthService(
 
         try
         {
-            var session = await supabaseClient.Auth.VerifyOTP(
-                email: null!,
-                token: resetRequest.Token,
-                type: Constants.EmailOtpType.Recovery
-            );
+            var session = await supabaseClient.Auth.SetSession(resetRequest.Token, resetRequest.Token);
 
-            if (session?.User == null)
+            if (session.User == null)
                 throw new UnauthorizedAccessException("Invalid or expired reset token.");
 
             var updateResponse = await supabaseClient.Auth.Update(new UserAttributes
@@ -117,12 +129,16 @@ public class SupabaseAuthService(
             if (updateResponse == null)
                 throw new Exception("Failed to update password.");
 
+            logger.LogInformation("Password reset successfully for user: {UserId}", session.User.Id);
+            
+            await supabaseClient.Auth.SignOut();
+            
             return "Password reset successfully";
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to reset password.");
-            throw new UnauthorizedAccessException("Invalid or expired reset token");
+            logger.LogError(ex, "Failed to reset password: {Message}", ex.Message);
+            throw new UnauthorizedAccessException("Invalid or expired reset token. Please request a new password reset link.");
         }
     }
     
@@ -150,6 +166,58 @@ public class SupabaseAuthService(
             LastName = profile?.LastName ?? string.Empty,
             ConfirmedAt = user.ConfirmedAt,
         };
+    }
+    
+     public async Task<string> ChangePasswordAsync(ChangePasswordRequestDto changeRequest)
+    {
+        logger.LogDebug("Attempting to change password for authenticated user");
+
+        var context = httpContextAccessor.HttpContext ?? throw new InvalidOperationException("HttpContext not available");
+        
+        var accessToken = context.Request.Cookies[AccessTokenCookie];
+        if (string.IsNullOrEmpty(accessToken))
+            throw new UnauthorizedAccessException("User not authenticated.");
+
+        try
+        {
+            var currentUser = await supabaseClient.Auth.GetUser(accessToken);
+            if (currentUser == null)
+                throw new UnauthorizedAccessException("Invalid session.");
+            
+            var verifySession = await supabaseClient.Auth.SignIn(
+                email: currentUser.Email!,
+                password: changeRequest.CurrentPassword
+            );
+
+            if (verifySession?.User == null)
+                throw new UnauthorizedAccessException("Current password is incorrect.");
+            
+            await supabaseClient.Auth.SetSession(verifySession.AccessToken!, verifySession.RefreshToken!);
+            
+            var updateResponse = await supabaseClient.Auth.Update(new UserAttributes
+            {
+                Password = changeRequest.NewPassword
+            });
+
+            if (updateResponse == null)
+                throw new Exception("Failed to update password.");
+
+            logger.LogInformation("Password changed successfully for user: {UserId}", currentUser.Id);
+            
+            SetAuthCookies(verifySession.AccessToken!, verifySession.RefreshToken!);
+
+            return "Password changed successfully.";
+        }
+        catch (Supabase.Gotrue.Exceptions.GotrueException ex) when (ex.Message.Contains("Invalid login"))
+        {
+            logger.LogWarning("Password change failed - incorrect current password");
+            throw new UnauthorizedAccessException("Current password is incorrect.");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to change password");
+            throw;
+        }
     }
     
     private void SetAuthCookies(string accessToken, string refreshToken)
