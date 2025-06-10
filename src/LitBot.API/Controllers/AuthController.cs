@@ -1,5 +1,5 @@
 ﻿using LitBot.Core.DTOs.Auth;
-using LitBot.Core.Interfaces;
+using LitBot.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -117,6 +117,17 @@ public class AuthController(
                 Instance = HttpContext.Request.Path
             });
         }
+        catch (Exception ex) when (ex.Message.Contains("Invalid login credentials"))
+        {
+            logger.LogWarning("Login failed - invalid input: {Message}", ex.Message);
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = ex.Message,
+                Status = StatusCodes.Status400BadRequest,
+                Instance = HttpContext.Request.Path
+            });
+        }
         catch (Exception ex)
         {
             logger.LogError(ex, "Unexpected error during login");
@@ -135,6 +146,7 @@ public class AuthController(
     /// </summary>
     /// <returns>Success message if refresh successful</returns>
     [HttpPost("refresh")]
+    [Authorize]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
@@ -275,7 +287,7 @@ public class AuthController(
     /// <param name="changePasswordDto">contains current and new password</param>
     /// <returns>successfully changes password</returns>
     [HttpPost("change-password")]
-    [Authorize] // User must be logged in
+    [Authorize]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

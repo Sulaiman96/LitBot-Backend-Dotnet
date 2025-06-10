@@ -1,5 +1,5 @@
-﻿using LitBot.Core.Interfaces;
-using LitBot.Infrastructure.Services;
+﻿using LitBot.Infrastructure.Services;
+using LitBot.Infrastructure.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Supabase;

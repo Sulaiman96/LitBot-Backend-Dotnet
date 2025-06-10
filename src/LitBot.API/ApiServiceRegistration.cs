@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using LitBot.Infrastructure.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
@@ -11,33 +12,11 @@ public static class ApiServiceRegistration
     {
         services.AddControllers();
         services.AddHttpContextAccessor();
-        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie(options =>
+        services.AddAuthentication("SupabaseAuth")
+            .AddSupabaseAuthentication(options =>
             {
-                options.Cookie.Name = "sb-access-token";
-                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-                options.Cookie.HttpOnly = true;
-                options.Cookie.SameSite = SameSiteMode.Strict;
-                options.LoginPath = "/api/auth/login";
-                options.LogoutPath = "/api/auth/logout";
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
-                options.SlidingExpiration = false;
-
-                options.Events.OnRedirectToLogin = context =>
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    context.Response.ContentType = "application/problem+json";
-
-                    var problemDetails = new ProblemDetails
-                    {
-                        Title = "Unauthorized",
-                        Detail = "Authentication required",
-                        Status = StatusCodes.Status401Unauthorized,
-                        Instance = context.Request.Path
-                    };
-
-                    return context.Response.WriteAsJsonAsync(problemDetails);
-                };
+                options.AccessTokenCookieName = "sb-access-token";
+                options.RefreshTokenCookieName = "sb-refresh-token";
             });
         
         services.AddAuthorization();

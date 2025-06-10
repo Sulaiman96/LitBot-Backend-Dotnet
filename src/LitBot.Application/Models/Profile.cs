@@ -26,17 +26,4 @@ public class Profile : BaseModel
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
-
-    // Relationships
-    [Reference(typeof(UserPaper), useInnerJoin: false)]
-    public List<UserPaper> Papers { get; set; } = [];
-
-    [Reference(typeof(Summary), useInnerJoin: false)]
-    public List<Summary> Summaries { get; set; } = [];
-
-    [Reference(typeof(Feedback), useInnerJoin: false)]
-    public List<Feedback> Feedbacks { get; set; } = [];
-
-    [Reference(typeof(ChatConversation), useInnerJoin: false)]
-    public List<ChatConversation> ChatConversations { get; set; } = [];
 }

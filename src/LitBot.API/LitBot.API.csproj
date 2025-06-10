@@ -5,6 +5,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <TreatWarningsAsErrorst>true</TreatWarningsAsErrorst>
+        <UserSecretsId>e1631396-6848-4f14-8345-ea276bf2dd9c</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
@@ -15,8 +16,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\LitBot.Core\LitBot.Core.csproj" />
-      <ProjectReference Include="..\LitBot.Core\LitBot.Core.csproj" />
+      <ProjectReference Include="..\LitBot.Contract\LitBot.Contract.csproj" />
+      <ProjectReference Include="..\LitBot.Application\LitBot.Application.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using LitBot.Core.DTOs.Auth;
 
-namespace LitBot.Core.Interfaces;
+namespace LitBot.Infrastructure.Services.Interfaces;
 
 public interface IAuthService
 {

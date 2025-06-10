@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Nullable>enable</Nullable>
+        <RootNamespace>LitBot.Core</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

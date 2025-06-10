@@ -1,6 +1,6 @@
 ﻿using LitBot.Core.DTOs.Auth;
-using LitBot.Core.Interfaces;
 using LitBot.Infrastructure.Models;
+using LitBot.Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Supabase.Gotrue;
@@ -260,6 +260,7 @@ public class SupabaseAuthService(
         {
             var response = await supabaseClient
                 .From<Profile>()
+                .Select("*")
                 .Where(p => p.UserId == userId)
                 .Single();
             

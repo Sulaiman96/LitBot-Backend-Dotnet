@@ -6,10 +6,11 @@
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Nullable>enable</Nullable>
         <UserSecretsId>3b77da1b-e7b2-4513-8b38-a825b88265f8</UserSecretsId>
+        <RootNamespace>LitBot.Infrastructure</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\LitBot.Core\LitBot.Core.csproj" />
+      <ProjectReference Include="..\LitBot.Contract\LitBot.Contract.csproj" />
     </ItemGroup>
 
     <ItemGroup>
